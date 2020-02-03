@@ -1,7 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 #include <string.h>
 #include <Windows.h>
+
+#define BUFFER_SIZE 256
 
 const char* ASCII_SOURCE_KEY = "-a";
 const char* UNICODE_SOURCE_KEY = "-u";
@@ -36,7 +39,7 @@ int main(int argc, char** argv) {
 		FILE_SHARE_READ,
 		NULL,
 		OPEN_EXISTING,
-		FILE_ATTRIBUTE_NORMAL | FILE_FLAG_OVERLAPPED, // normal file
+		FILE_ATTRIBUTE_NORMAL,
 		NULL);
 
 	if (source_file == INVALID_HANDLE_VALUE) {
@@ -58,5 +61,51 @@ int main(int argc, char** argv) {
 		exit(EXIT_FAILURE);
 	}
 
+	if (strstr(argv[1], ASCII_SOURCE_KEY)) {
+		printf("Converting ASCII to Unicode...\n");
+		char buffer[BUFFER_SIZE];
+		int bytes_read = 0;
+		do {
+			bool read_result = ReadFile(
+				source_file,
+				&buffer,
+				BUFFER_SIZE,
+				&bytes_read,
+				NULL);
+
+			// 1. determine required unicode buffer size
+			int unicode_string_len = MultiByteToWideChar(
+				CP_UTF8,
+				0,
+				buffer,
+				bytes_read,
+				NULL,
+				0);
+			// 2. allocate unicode string
+			wchar_t* unicode_string = calloc(unicode_string_len, sizeof(wchar_t));
+			// 3. convert
+			MultiByteToWideChar(
+				CP_UTF8,
+				0,
+				buffer,
+				bytes_read,
+				unicode_string,
+				unicode_string_len);
+
+			// printf("%ws", unicode_string); for debug
+			// 4. Save result
+			int bytes_written;
+			bool write_result = WriteFile(
+				target_file,
+				unicode_string,
+				unicode_string_len * sizeof(wchar_t),
+				&bytes_written,
+				NULL);
+			// printf("%d", bytes_written); for debug
+		} while (bytes_read != 0); // EOF
+	}
+
+	CloseHandle(source_file);
+	CloseHandle(target_file);
 	exit(EXIT_SUCCESS);
 }
