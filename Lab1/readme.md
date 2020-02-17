@@ -1,6 +1,6 @@
 ### Lab 1.1
 
-Create a program that accepts one of two possible arguments:
+Create a program that runs in one of two possible modes:
 - `-e` Generate an error and print information about it using a combination of `GetLastError` and `FormatMessage` functions
 - `-s` Print system info using `GetNativeSystemInfo` and `GlobalMemoryStatusEx` functions
 
