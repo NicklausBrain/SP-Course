@@ -5,9 +5,12 @@
 #include <Windows.h>
 
 #define READ_BUFFER_SIZE 256
-
-const char* ASCII_SOURCE_KEY = "-a";
-const char* UNICODE_SOURCE_KEY = "-u";
+#define SOURCE_TYPE_INDEX 1
+#define SOURCE_FILE_INDEX 2
+#define TARGET_FILE_INDEX 3
+#define EXPECTED_ARGS_COUNT 4
+#define ASCII_SOURCE_KEY "-a"
+#define UNICODE_SOURCE_KEY "-u"
 
 void print_supported_args() {
 	printf("Required arguments:\n");
@@ -149,20 +152,22 @@ bool convert_to_ascii(HANDLE source_file, HANDLE target_file) {
 }
 
 int main(int argc, char** argv) {
-	if (argc < 4 || !argv[2] || !argv[3]) {
+	if (argc < EXPECTED_ARGS_COUNT) {
 		printf("Required arguments unspecified!\n");
 		print_supported_args();
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
-	if (!strstr(argv[1], ASCII_SOURCE_KEY) && !strstr(argv[1], UNICODE_SOURCE_KEY)) {
-		printf("Argument %s is not supported!", argv[1]);
+	const char* const source_type = argv[SOURCE_TYPE_INDEX];
+	const char* const source_path = argv[SOURCE_FILE_INDEX];
+	const char* const target_path = argv[TARGET_FILE_INDEX];
+
+	if (!strstr(source_type, ASCII_SOURCE_KEY) &&
+		!strstr(source_type, UNICODE_SOURCE_KEY)) {
+		printf("Argument %s is not supported!", source_type);
 		print_supported_args();
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
-
-	char* source_path = argv[2];
-	char* target_path = argv[3];
 
 	HANDLE source_file = CreateFile(
 		source_path,
@@ -189,7 +194,7 @@ int main(int argc, char** argv) {
 
 	if (target_file == NULL) {
 		printf("Unable to open the target file '%s'\n", target_path);
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 
 	bool conversion_result = false;
@@ -209,10 +214,10 @@ int main(int argc, char** argv) {
 
 	if (conversion_result) {
 		printf("Conversion succeeded!\n");
-		exit(EXIT_SUCCESS);
+		return EXIT_SUCCESS;
 	}
 	else {
 		printf("Conversion failed!\n");
-		exit(EXIT_FAILURE);
+		return EXIT_FAILURE;
 	}
 }
